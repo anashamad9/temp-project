@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react";
 
 interface PortfolioShowcaseProps {
-  language: "en" | "ar"
+  language: "en" | "ar";
 }
 
 const portfolioItems = [
@@ -15,69 +15,89 @@ const portfolioItems = [
   { id: 6, title: { en: "Onqoud AI Landing", ar: "صفحة هبوط عنقود للذكاء الاصطناعي" }, category: { en: "Business Intelligence, Landing Page", ar: "ذكاء الأعمال، صفحة هبوط" }, image: "/projects/onqoud-landing.png" },
   { id: 7, title: { en: "ElmLLM Platform", ar: "منصة علم" }, category: { en: "Arabic LLM Chatbot, Landing Page", ar: "واجهة نموذج لغوي ضخم و محادثة عربي، صفحة هبوط" }, image: "/projects/elmllm-landing.png" },
   { id: 8, title: { en: "ThakaaLab", ar: "ذكاء لاب" }, category: { en: "SaaS, Tech Startups", ar: "البرمجيات كخدمة، الشركات الناشئة التقنية" }, image: "/projects/Group 30.png" },
-]
+];
 
 export function PortfolioShowcase({ language }: PortfolioShowcaseProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const trackRef = useRef<HTMLDivElement>(null)
-  const [isHovered, setIsHovered] = useState(false)
-  const isHoveredRef = useRef(false)
-
-  useEffect(() => { isHoveredRef.current = isHovered }, [isHovered])
+  const containerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const isHoveredRef = useRef(false);
 
   useEffect(() => {
-    const container = containerRef.current
-    const track = trackRef.current
-    if (!container || !track) return
+    isHoveredRef.current = isHovered;
+  }, [isHovered]);
 
-    const DUPLICATES = 3 // triple for seamless coverage
-    let pos = 0
-    let frameId = 0
-    let segmentWidth = 0
-    const normalSpeed = 0.8
-    const slowSpeed = 0.2
+  useEffect(() => {
+    const container = containerRef.current;
+    const track = trackRef.current;
+    if (!container || !track) return;
+
+    const DUPLICATES = 3; // triple for seamless coverage
+    let pos = 0;
+    let frameId = 0;
+    let segmentWidth = 0;
+    const normalSpeed = 0.8;
+    const slowSpeed = 0.2;
 
     const recalc = () => {
-      // total width = DUPLICATES * segmentWidth
-      segmentWidth = track.scrollWidth / DUPLICATES
-      // keep position within current segment after recalculation
-      pos = ((pos % segmentWidth) + segmentWidth) % segmentWidth
-      track.style.transform = `translateX(${-pos}px)`
-    }
+      segmentWidth = track.scrollWidth / DUPLICATES;
+      pos = ((pos % segmentWidth) + segmentWidth) % segmentWidth;
+      track.style.transform = `translateX(${-pos}px)`;
+    };
 
     // initial measure
-    recalc()
+    recalc();
 
-    // observe size changes (images loading, responsive)
-    let ro: ResizeObserver | null = null
-    if ("ResizeObserver" in window) {
-      ro = new ResizeObserver(recalc)
-      ro.observe(track)
-      ro.observe(container)
+    // Observe size changes (images loading, responsive)
+    let ro: ResizeObserver | null = null;
+    const hasRO = typeof ResizeObserver !== "undefined";
+
+    if (hasRO) {
+      ro = new ResizeObserver(recalc);
+      ro.observe(track);
+      ro.observe(container);
     } else {
-      setTimeout(recalc, 400)
-      window.addEventListener("load", recalc, { once: true })
+      // Fallback for environments without RO
+      const t = setTimeout(recalc, 400);
+      if (typeof globalThis !== "undefined" && typeof globalThis.addEventListener === "function") {
+        globalThis.addEventListener("load", recalc as EventListener, { once: true });
+      }
+      // Cleanup for the fallback timeout+listener
+      // (we’ll also clean the animation + resize below)
+      const cleanupFallback = () => {
+        clearTimeout(t);
+        if (typeof globalThis !== "undefined" && typeof globalThis.removeEventListener === "function") {
+          globalThis.removeEventListener("load", recalc as EventListener);
+        }
+      };
+      // Attach to return cleanup via a flag
+      (recalc as any)._cleanupFallback = cleanupFallback;
     }
 
     const animate = () => {
-      const speed = isHoveredRef.current ? slowSpeed : normalSpeed
-      pos += speed
-      if (pos >= segmentWidth) pos -= segmentWidth // loop seamlessly after one full set
-      track.style.transform = `translateX(${-pos}px)`
-      frameId = requestAnimationFrame(animate)
+      const speed = isHoveredRef.current ? slowSpeed : normalSpeed;
+      pos += speed;
+      if (pos >= segmentWidth) pos -= segmentWidth;
+      track.style.transform = `translateX(${-pos}px)`;
+      frameId = requestAnimationFrame(animate);
+    };
+
+    frameId = requestAnimationFrame(animate);
+
+    const onResize = () => recalc();
+    if (typeof globalThis !== "undefined" && typeof globalThis.addEventListener === "function") {
+      globalThis.addEventListener("resize", onResize as EventListener);
     }
-
-    frameId = requestAnimationFrame(animate)
-
-    const onResize = () => recalc()
-    window.addEventListener("resize", onResize)
 
     return () => {
-      cancelAnimationFrame(frameId)
-      window.removeEventListener("resize", onResize)
-      if (ro) ro.disconnect()
-    }
-  }, [language]) // re-init widths when text changes between EN/AR
+      cancelAnimationFrame(frameId);
+      if (typeof globalThis !== "undefined" && typeof globalThis.removeEventListener === "function") {
+        globalThis.removeEventListener("resize", onResize as EventListener);
+      }
+      if (ro) ro.disconnect();
+      if ((recalc as any)._cleanupFallback) (recalc as any)._cleanupFallback();
+    };
+  }, [language]); // re-init widths when text changes between EN/AR
 
   return (
     <section className="py-16 bg-muted/30 w-full" dir={language === "ar" ? "rtl" : "ltr"}>
@@ -87,13 +107,8 @@ export function PortfolioShowcase({ language }: PortfolioShowcaseProps) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* IMPORTANT: keep the moving track LTR so order stays stable in Arabic */}
-        <div
-          ref={trackRef}
-          dir="ltr"
-          className="flex gap-8 will-change-transform"
-          style={{ transform: "translateX(0px)" }}
-        >
+        {/* Keep the moving track LTR so order stays stable in Arabic */}
+        <div ref={trackRef} dir="ltr" className="flex gap-8 will-change-transform" style={{ transform: "translateX(0px)" }}>
           {/* Triple-duplicate for seamless loop */}
           {[...portfolioItems, ...portfolioItems, ...portfolioItems].map((item, index) => (
             <div key={`${item.id}-${index}`} className="flex-shrink-0 group cursor-pointer">
@@ -115,5 +130,5 @@ export function PortfolioShowcase({ language }: PortfolioShowcaseProps) {
         </div>
       </div>
     </section>
-  )
+  );
 }
