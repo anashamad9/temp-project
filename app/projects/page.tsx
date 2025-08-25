@@ -1,30 +1,30 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import Image from "next/image"
+import { useState, useEffect } from "react";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
+
+type Lang = "en" | "ar";
 
 export default function ProjectsPage() {
-  const [language, setLanguage] = useState("en")
+  const [language, setLanguage] = useState<Lang>("en");
+  const [currentImageIndex, setCurrentImageIndex] = useState<Record<number, number>>({});
 
   useEffect(() => {
-    // Check URL params first, then localStorage
-    const urlParams = new URLSearchParams(window.location.search)
-    const langParam = urlParams.get("lang")
-
-    if (langParam && (langParam === "en" || langParam === "ar")) {
-      setLanguage(langParam)
-      localStorage.setItem("language", langParam)
-    } else {
-      const savedLanguage = localStorage.getItem("language")
-      if (savedLanguage && (savedLanguage === "en" || savedLanguage === "ar")) {
-        setLanguage(savedLanguage)
-      }
+    // Check URL param first, then localStorage (narrow to Lang)
+    const params = new URLSearchParams(window.location.search);
+    const qp = params.get("lang");
+    if (qp === "en" || qp === "ar") {
+      setLanguage(qp);
+      localStorage.setItem("language", qp);
+      return;
     }
-  }, [])
+    const saved = localStorage.getItem("language");
+    if (saved === "en" || saved === "ar") setLanguage(saved);
+  }, []);
 
   const projects = [
     {
@@ -32,8 +32,7 @@ export default function ProjectsPage() {
       clientLogo: "/client-logos/onqoud-logo.png",
       clientName: "Onqoud AI",
       type: language === "ar" ? "منصة ذكاء اصطناعي" : "AI Platform",
-      features:
-        language === "ar" ? ["تحليل البيانات", "لوحة تحكم", "تقارير"] : ["Data Analytics", "Dashboard", "Reports"],
+      features: language === "ar" ? ["تحليل البيانات", "لوحة تحكم", "تقارير"] : ["Data Analytics", "Dashboard", "Reports"],
       images: ["/projects/onqoud-landing.png", "/projects/onqoud-dashboard.png"],
       description:
         language === "ar"
@@ -45,8 +44,7 @@ export default function ProjectsPage() {
       clientLogo: "/client-logos/elmllm-logo.png",
       clientName: "ElmLLM",
       type: language === "ar" ? "نموذج لغوي" : "Language Model",
-      features:
-        language === "ar" ? ["معالجة اللغة", "ذكاء اصطناعي", "محادثة"] : ["NLP", "AI Chat", "Language Processing"],
+      features: language === "ar" ? ["معالجة اللغة", "ذكاء اصطناعي", "محادثة"] : ["NLP", "AI Chat", "Language Processing"],
       images: ["/projects/elmllm-landing.png", "/projects/elmllm-chatbot.png"],
       description:
         language === "ar"
@@ -65,23 +63,21 @@ export default function ProjectsPage() {
           ? "موقع شخصي احترافي لمهندس تعلم آلة يعرض خبراته ومشاريعه التقنية. يتميز بتصميم عصري وواجهة مستخدم بديهية مع دعم كامل للغة العربية."
           : "Professional personal website for a machine learning engineer showcasing technical expertise and projects. Features modern design and intuitive user interface with full Arabic language support.",
     },
-  ]
+  ] as const;
 
-  const [currentImageIndex, setCurrentImageIndex] = useState<{ [key: number]: number }>({})
-
-  const nextImage = (projectId: number, totalImages: number) => {
+  const nextImage = (projectId: number, total: number) => {
     setCurrentImageIndex((prev) => ({
       ...prev,
-      [projectId]: ((prev[projectId] || 0) + 1) % totalImages,
-    }))
-  }
+      [projectId]: ((prev[projectId] ?? 0) + 1) % total,
+    }));
+  };
 
-  const prevImage = (projectId: number, totalImages: number) => {
+  const prevImage = (projectId: number, total: number) => {
     setCurrentImageIndex((prev) => ({
       ...prev,
-      [projectId]: ((prev[projectId] || 0) - 1 + totalImages) % totalImages,
-    }))
-  }
+      [projectId]: ((prev[projectId] ?? 0) - 1 + total) % total,
+    }));
+  };
 
   return (
     <div
@@ -98,24 +94,17 @@ export default function ProjectsPage() {
               {language === "ar" ? "مشاريعنا" : "Our Projects"}
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              {language === "ar"
-                ? "استكشف مجموعة من أفضل أعمالنا وحلولنا المبتكرة للعملاء"
-                : "Explore our finest work and innovative solutions for clients"}
+              {language === "ar" ? "استكشف مجموعة من أفضل أعمالنا وحلولنا المبتكرة للعملاء" : "Explore our finest work and innovative solutions for clients"}
             </p>
           </div>
 
-          {/* Projects Grid */}
+          {/* Projects */}
           <div className="space-y-8">
             {projects.map((project) => (
-              <div
-                key={project.id}
-                className="border border-border/40 rounded-xl overflow-hidden bg-background leading-7"
-              >
+              <div key={project.id} className="border border-border/40 rounded-xl overflow-hidden bg-background leading-7">
                 <div className="grid lg:grid-cols-12 min-h-[400px]">
-                  {/* Left Section - Client Info */}
-                  <div
-                    className={`lg:col-span-3 p-6 border-r border-border/40 ${language === "ar" ? "text-right" : "text-left"}`}
-                  >
+                  {/* Left */}
+                  <div className={`lg:col-span-3 p-6 border-r border-border/40 ${language === "ar" ? "text-right" : "text-left"}`}>
                     <div className="space-y-4">
                       <div className={`flex items-center gap-3 ${language === "ar" ? "flex-row-reverse" : ""}`}>
                         <div className="w-12 h-12 flex items-center justify-center">
@@ -138,8 +127,8 @@ export default function ProjectsPage() {
                           {language === "ar" ? "المميزات" : "Features"}
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {project.features.map((feature, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
+                          {project.features.map((feature, i) => (
+                            <Badge key={i} variant="secondary" className="text-xs">
                               {feature}
                             </Badge>
                           ))}
@@ -148,17 +137,17 @@ export default function ProjectsPage() {
                     </div>
                   </div>
 
-                  {/* Middle Section - Images */}
+                  {/* Middle */}
                   <div className="lg:col-span-6 relative bg-muted">
                     <div className="relative h-full min-h-[400px]">
                       <Image
-                        src={project.images[currentImageIndex[project.id] || 0]}
+                        src={project.images[currentImageIndex[project.id] ?? 0]}
                         alt={`${project.clientName} project`}
                         fill
+                        sizes="(max-width: 1024px) 100vw, 50vw"
                         className="object-cover"
                       />
 
-                      {/* Navigation Arrows */}
                       {project.images.length > 1 && (
                         <>
                           <button
@@ -182,14 +171,13 @@ export default function ProjectsPage() {
                             <ChevronRight className="w-5 h-5" />
                           </button>
 
-                          {/* Image Indicators */}
                           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                            {project.images.map((_, index) => (
+                            {project.images.map((_, i) => (
                               <button
-                                key={index}
-                                onClick={() => setCurrentImageIndex((prev) => ({ ...prev, [project.id]: index }))}
+                                key={i}
+                                onClick={() => setCurrentImageIndex((prev) => ({ ...prev, [project.id]: i }))}
                                 className={`w-2 h-2 rounded-full transition-colors ${
-                                  (currentImageIndex[project.id] || 0) === index ? "bg-primary" : "bg-background/60"
+                                  (currentImageIndex[project.id] ?? 0) === i ? "bg-primary" : "bg-background/60"
                                 }`}
                               />
                             ))}
@@ -199,12 +187,10 @@ export default function ProjectsPage() {
                     </div>
                   </div>
 
-                  {/* Right Section - Description */}
+                  {/* Right */}
                   <div className={`lg:col-span-3 p-6 ${language === "ar" ? "text-right" : "text-left"}`}>
                     <div className="space-y-4">
-                      <h4 className="font-semibold text-lg">
-                        {language === "ar" ? "وصف المشروع" : "Project Description"}
-                      </h4>
+                      <h4 className="font-semibold text-lg">{language === "ar" ? "وصف المشروع" : "Project Description"}</h4>
                       <p className="text-muted-foreground leading-relaxed">{project.description}</p>
                     </div>
                   </div>
@@ -217,5 +203,5 @@ export default function ProjectsPage() {
 
       <Footer language={language} />
     </div>
-  )
+  );
 }
