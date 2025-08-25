@@ -9,6 +9,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-}
 
-export default nextConfig
+  // 👇 this makes Next.js output static HTML
+  output: 'export',
+
+  // 👇 required if deploying to a repo (https://username.github.io/repo)
+  // replace REPO with your actual repository name
+  // basePath: '/REPO',
+  // assetPrefix: '/REPO/',
+};
+
+export default nextConfig;
